@@ -1,0 +1,114 @@
+APPENDIX	
+Program Code:
+
+	              The program code which is dumped in the microcontroller of our project is shown below.
+
+#include <16F73.h>
+
+#fuses      HS,NOWDT,PROTECT,brownout,put
+
+#use        delay  (clock=20000000)
+
+#include <lcd.c>
+#include <ADC.c>
+
+   int16 freq = 0;
+   int16 vol = 0;
+   int16 count = 0;
+
+void intro()
+{
+    lcd_putc('\f');
+    lcd_gotoxy(1,1);
+    printf(lcd_putc,"   WELCOME   ");
+    lcd_gotoxy(1,2);
+    printf(lcd_putc,"      TO     ");
+    delay_ms(2000);
+    lcd_putc('\f');
+    lcd_gotoxy(1,1);
+    printf(lcd_putc,"power grid");
+    lcd_gotoxy(1,2);
+    printf(lcd_putc,"   failure  monitrng    ");
+    delay_ms(2000);
+}
+
+void main()
+{
+   lcd_init();
+    delay_ms(500);
+    intro();
+   //Microcontroller Health Check Start
+  
+   output_high(PIN_C4);
+   delay_ms(1000);
+   output_low(PIN_C4);
+   delay_ms(1000);
+   output_high(PIN_C4);
+   delay_ms(1000);
+   output_low(PIN_C4);
+   delay_ms(1000);
+   
+   output_high(PIN_C7);   //Close Relay
+   output_high(PIN_C4);   // LED Indicator
+     
+     set_timer0(0);
+     
+    while(1)
+    {      
+      delay_ms(200);
+      
+      vol = read_voltage();   
+      vol = vol();   
+                  
+      freq = 0;
+      set_timer0(0);                  //Initialise Frequency Counter
+      delay_ms(1000);
+      freq = get_timer0();           //Get Frequency  
+      
+           
+      lcd_putc('\f');
+      lcd_gotoxy(1,1);
+      printf(lcd_putc,"V=%Lu V",vol);
+      lcd_gotoxy(1,2);
+      printf(lcd_putc,"F=%LuHz,T=%Lu C ",freq+1,freq_read);
+      delay_ms(2000);
+                
+      if(vol > 240)
+      {
+         high_voltage();
+         lcd_putc('\f');
+         lcd_gotoxy(1,1);
+         printf(lcd_putc," voltage  alert ");
+         output_high(pin_C3);
+         delay_ms(1000);
+
+      }
+      
+      if(vol < 170)
+      {
+         output_low(PIN_C7);   //Close Relay
+         output_low(PIN_C4);   // LED Indicator
+         
+         lcd_putc('\f');
+         lcd_gotoxy(1,1);
+         printf(lcd_putc,"Volatge alert    ");
+         output_high(pin_C3);
+         delay_ms(1000);
+      }
+      
+      
+      if(freq_read > 50)
+      {
+         output_low(PIN_C7);   //Close Relay
+         output_low(PIN_C4);
+         
+         lcd_putc('\f');
+         lcd_gotoxy(1,1);
+         printf(lcd_putc,"Frequency alert");         
+         output_high(pin_C3);
+         delay_ms(1000);
+      }      
+      
+      output_low(pin_C3);
+    }      
+}
